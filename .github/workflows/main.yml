@@ -1,0 +1,36 @@
+name: Fetch Forex Calendar
+
+on:
+  schedule:
+    # Run at 6:30 AM UK time (UTC+0 in winter, UTC+1 in summer)
+    # Using 6:30 UTC to ensure it runs before your 7 AM Discord message
+    - cron: '30 6 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  fetch-calendar:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4 lxml
+          
+      - name: Fetch Forex Factory Calendar
+        run: |
+          python fetch_calendar.py
+          
+      - name: Commit and push if changed
+        run: |
+          git config --global user.name 'GitHub Actions Bot'
+          git config --global user.email 'actions@github.com'
+          git add calendar.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update calendar data - $(date -u '+%Y-%m-%d %H:%M UTC')" && git push)
